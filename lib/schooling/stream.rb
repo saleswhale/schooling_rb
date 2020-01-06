@@ -39,15 +39,18 @@ module Schooling
     end
 
     def create_group
+      check_topic
       @logger.info event: :group_create, topic: @topic, name: @group
       @redis.xgroup(:create, @topic, @group, '$')
     end
 
     def list_groups
+      check_topic
       @redis.xinfo(:groups, @topic)
     end
 
     def count
+      check_topic
       @redis.xlen(@topic)
     end
 
@@ -57,15 +60,19 @@ module Schooling
     end
 
     def process_batch
-      unless topic_exists?
-        return @logger.error event: :topic_not_created, error: 'Please create the topic first'
-      end
-
+      check_topic
       process_failed_events
       process_unseen
     end
 
     private
+
+    def check_topic
+      return if topic_exists?
+
+      @logger.error event: :topic_not_created, error: 'Please create the topic first'
+      raise 'Topic not created'
+    end
 
     def topic_exists?
       @logger.debug event: :check_topic_exists
@@ -75,39 +82,33 @@ module Schooling
       false
     end
 
-    def process_failed_events
-      @logger.debug event: :checking_pending
+    def process_event(id, event)
+      @logger.info event: :processing, id: id
+      @processor.process(event)
+      @redis.xack(@topic, @group, id)
+    rescue StandardError => e
+      @logger.error event: :failed_processing, id: id, error: e.message
+    end
 
+    def process_failed_events
       @redis.xpending(@topic, @group, '-', '+', @cap).each do |event|
         id = event['entry_id']
         retries = event['count']
-        elapsed = event['elapsed']
         idle_timeout = @backoff.timeout_ms(retries)
 
         failed = @redis.xclaim(@topic, @group, @consumer, idle_timeout.to_int, id)[0]
-        unless failed.nil?
-          @logger.info event: :retrying_event, retries: retries, elapsed: elapsed
-          @logger.info event: :processing, id: id
-          @processor.process(JSON.parse(failed[1]['json']))
-          @redis.xack(@topic, @group, id)
-        end
-      rescue StandardError => e
-        @logger.error event: :failed_processing, id: id, error: e.message
+        next if failed.nil?
+
+        @logger.info event: :retrying_event, retries: retries, id: id
+        process_event(id, JSON.parse(failed[1]['json']))
       end
     end
 
     def process_unseen
-      @logger.info event: :polling, topic: @topic, group: @topic, name: @consumer
       events = @redis.xreadgroup(@group, @consumer, @topic, '>', count: @cap, block: @block)
       return if events == {}
 
-      events.fetch(@topic).each do |id, event|
-        @logger.info event: :processing, id: id
-        @processor.process(JSON.parse(event['json']))
-        @redis.xack(@topic, @group, id)
-      rescue StandardError => e
-        @logger.error event: :failed_processing, id: id, error: e.message
-      end
+      events.fetch(@topic).each { |id, event| process_event(id, JSON.parse(event['json'])) }
     end
   end
 end
