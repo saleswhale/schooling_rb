@@ -1,4 +1,5 @@
-require 'schooling/stream'
+require 'schooling/subscriber'
+require 'schooling/publisher'
 require 'redis'
 
 class Processor
@@ -8,9 +9,11 @@ class Processor
   end
 end
 
-describe Schooling::Stream do
+describe Schooling::Subscriber do
   it 'should' do
     Redis.new.flushdb
+
+    p = Schooling::Publisher.new(topic: 'topic')
 
     s = described_class.new(
       topic: 'topic',
@@ -26,12 +29,12 @@ describe Schooling::Stream do
       processor: Processor.new
     )
 
-    s.publish('hello, world')
+    p.publish('hello, world')
     s.create_group
 
     t1 = Thread.new { 100.times { s.process_batch } }
     t2 = Thread.new { 100.times { s2.process_batch } }
-    t3 = Thread.new { 100.times { |i| s.publish(a: i); sleep rand * 2 } }
+    t3 = Thread.new { 100.times { |i| p.publish(a: i); sleep rand * 2 } }
 
     t1.join
     t2.join

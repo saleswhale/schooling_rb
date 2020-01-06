@@ -1,36 +1,35 @@
 # frozen_string_literal: true
 
-require 'schooling/version'
-require 'schooling/logger'
 require 'schooling/backoff'
+require 'schooling/logger'
+
 require 'redis'
 require 'json'
 
 module Schooling
-  class Stream
+  class Subscriber
     SECS = 1000
 
-    DEFAULT_CAP = 10_000 # Max events stored
+    BATCH_SIZE = 1000 # How many events to fetch
     DEFAULT_BLOCK = 2 * SECS
 
     def initialize(
+          url: nil,
           topic:,
           group:,
           consumer:,
           processor:,
-          cap: DEFAULT_CAP,
           block: DEFAULT_BLOCK,
           backoff: Schooling::ExponentialBackoff.new,
           logger: Schooling::CliLogger.new(level: :debug)
         )
-      @redis = Redis.new
+      @redis = Redis.new(url: url)
 
       # Settings
       @topic = topic
       @group = group
       @consumer = consumer
       @processor = processor
-      @cap = cap
       @block = block
 
       # Behavior
@@ -39,9 +38,8 @@ module Schooling
     end
 
     def create_group
-      check_topic
       @logger.info event: :group_create, topic: @topic, name: @group
-      @redis.xgroup(:create, @topic, @group, '$')
+      @redis.xgroup(:create, @topic, @group, '$', mkstream: true)
     end
 
     def list_groups
@@ -52,11 +50,6 @@ module Schooling
     def count
       check_topic
       @redis.xlen(@topic)
-    end
-
-    def publish(body)
-      @logger.debug event: :publish, topic: @topic
-      @redis.xadd(@topic, { json: JSON.dump(body) }, maxlen: ['~', @cap])
     end
 
     def process_batch
@@ -91,7 +84,7 @@ module Schooling
     end
 
     def process_failed_events
-      @redis.xpending(@topic, @group, '-', '+', @cap).each do |event|
+      @redis.xpending(@topic, @group, '-', '+', BATCH_SIZE).each do |event|
         id = event['entry_id']
         retries = event['count']
         idle_timeout = @backoff.timeout_ms(retries)
@@ -105,7 +98,7 @@ module Schooling
     end
 
     def process_unseen
-      events = @redis.xreadgroup(@group, @consumer, @topic, '>', count: @cap, block: @block)
+      events = @redis.xreadgroup(@group, @consumer, @topic, '>', count: BATCH_SIZE, block: @block)
       return if events == {}
 
       events.fetch(@topic).each { |id, event| process_event(id, JSON.parse(event['json'])) }
