@@ -4,7 +4,9 @@ module Schooling
   class Error < StandardError; end
   # Your code goes here...
 
-  def hello_world
-    puts "Hello, world"
+  class Demo
+    def hello_world
+      :hello_world
+    end
   end
 end
