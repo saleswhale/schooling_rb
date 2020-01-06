@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["max@saleswhale.com"]
 
   spec.summary       = %q{Short summary}
-  spec.homepage      = "git@github.com:saleswhale/schooling_rb.git"
+  spec.homepage      = "https://github.com/saleswhale/schooling_rb.git"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
