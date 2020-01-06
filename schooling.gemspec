@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["max@saleswhale.com"]
 
   spec.summary       = %q{Short summary}
-  spec.homepage      = "https://github.com/saleswhale/schooling_rb.git"
+  spec.homepage      = "https://github.com/saleswhale/schooling_rb"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -17,8 +17,8 @@ Gem::Specification.new do |spec|
     spec.metadata["allowed_push_host"] = "we don't use a private gem server"
 
     spec.metadata["homepage_uri"] = spec.homepage
-    spec.metadata["source_code_uri"] = "git@github.com:saleswhale/schooling_rb.git"
-    spec.metadata["changelog_uri"] = "git@github.com:saleswhale/schooling_rb.git"
+    spec.metadata["source_code_uri"] = "https://github.com/saleswhale/schooling_rb.git"
+    spec.metadata["changelog_uri"] = "https://github.com/saleswhale/schooling_rb.git"
   else
     raise "RubyGems 2.0 or newer is required to protect against " \
       "public gem pushes."
