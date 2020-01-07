@@ -7,12 +7,11 @@ A simple wrapper around Redis streams. Motivation:
 
 Features:
 
-- [ ] Publish/Subscribe
-- [ ] Trim events (only keep last `x` events to save memory)
-- [ ] Consumer Groups
-- [ ] JSON handling
-- [ ] Retry on error
-- [ ] Deadset
+- Publish/Subscribe
+- Trim events (only keep last `x` events to save memory)
+- Consumer Groups
+- JSON handling
+- Retry on error
 
 ## FAQ
 
