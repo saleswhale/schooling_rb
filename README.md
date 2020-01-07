@@ -31,7 +31,54 @@ And then execute:
 
 ### How do I use the library?
 
-TODO: Write usage instructions here
+You need to
+
+1. Supply a processor class
+2. Supply a Redis client instance
+3. Subscribe to the topic in a group as a consumer (unique name)
+4. Call `process_batch`
+
+```ruby
+require 'schooling/subscriber'
+require 'schooling/publisher'
+require 'redis'
+
+class Processor
+  def process(e)
+    raise 'I fail' if rand > 0.5
+    sleep rand * 5
+  end
+end
+
+p = Schooling::Publisher.new(redis: Redis.new, topic: 'topic')
+
+s = described_class.new(
+  redis: Redis.new,
+  topic: 'topic',
+  group: 'g1',
+  consumer: 'c1',
+  processor: Processor.new
+)
+
+s2 = described_class.new(
+  redis: Redis.new,
+  topic: 'topic',
+  group: 'g1',
+  consumer: 'c2',
+  processor: Processor.new
+)
+
+p.publish('hello, world')
+s.create_group
+
+t1 = Thread.new { 100.times { s.process_batch } }
+t2 = Thread.new { 100.times { s2.process_batch } }
+t3 = Thread.new { 100.times { |i| p.publish(a: i); sleep rand * 2 } }
+
+t1.join
+t2.join
+t3.join
+```
 
 ## Development
 
