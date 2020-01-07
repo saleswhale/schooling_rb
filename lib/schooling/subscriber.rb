@@ -3,7 +3,6 @@
 require 'schooling/backoff'
 require 'schooling/logger'
 
-require 'redis'
 require 'json'
 
 module Schooling
@@ -14,7 +13,7 @@ module Schooling
     DEFAULT_BLOCK = 2 * SECS
 
     def initialize(
-          url: nil,
+          redis:,
           topic:,
           group:,
           consumer:,
@@ -23,7 +22,7 @@ module Schooling
           backoff: Schooling::ExponentialBackoff.new,
           logger: Schooling::CliLogger.new(level: :debug)
         )
-      @redis = Redis.new(url: url)
+      @redis = redis
 
       # Settings
       @topic = topic

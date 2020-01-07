@@ -13,9 +13,10 @@ describe Schooling::Subscriber do
   it 'should' do
     Redis.new.flushdb
 
-    p = Schooling::Publisher.new(topic: 'topic')
+    p = Schooling::Publisher.new(redis: Redis.new, topic: 'topic')
 
     s = described_class.new(
+      redis: Redis.new,
       topic: 'topic',
       group: 'g1',
       consumer: 'c1',
@@ -23,6 +24,7 @@ describe Schooling::Subscriber do
     )
 
     s2 = described_class.new(
+      redis: Redis.new,
       topic: 'topic',
       group: 'g1',
       consumer: 'c2',

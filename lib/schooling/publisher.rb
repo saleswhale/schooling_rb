@@ -2,7 +2,6 @@
 
 require 'schooling/logger'
 
-require 'redis'
 require 'json'
 
 module Schooling
@@ -16,9 +15,9 @@ module Schooling
   class Publisher
     DEFAULT_CAP = 100_000 # Max events stored
 
-    def initialize(url: nil, topic:, cap: DEFAULT_CAP,
+    def initialize(redis:, topic:, cap: DEFAULT_CAP,
                    logger: Schooling::CliLogger.new)
-      @redis = Redis.new(url: url)
+      @redis = redis
 
       @topic = topic
       @cap = cap
