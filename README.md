@@ -52,12 +52,10 @@ end
 p = Schooling::Publisher.new('t')
 
 config_1 = { topic: 't', group: 'g', consumer: 'c1' }
-s = described_class.new(config_1, redis: Redis.new)
+s = Schooling::Subscriber.new(config_1, redis: Redis.new)
 
 config_2 = { topic: 't', group: 'g', consumer: 'c2' }
-s2 = described_class.new(config_2, redis: Redis.new)
-
-p.publish('hello, world')
+s2 = Schooling::Subscriber.new(config_2, redis: Redis.new)
 
 processor = Processor.new
 t1 = Thread.new { 100.times { s.process(processor) } }
