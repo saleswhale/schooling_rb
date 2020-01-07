@@ -9,10 +9,10 @@ module Schooling
   #
   # Example:
   #
-  #   p = Publisher.new(topic: 'topic')
+  #   p = Schooling::Producer.new('topic')
   #   p.publish a: 42, time: Time.now
   #
-  class Publisher
+  class Producer
     attr_accessor :cap, :logger
     DEFAULT_CAP = 100_000 # Max events stored
 
