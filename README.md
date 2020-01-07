@@ -35,7 +35,7 @@ You need to
 1. Supply a processor class
 2. Supply a Redis client instance
 3. Subscribe to the topic in a group as a consumer (unique name)
-4. Call `process_batch`
+4. Call `process`
 
 ```ruby
 require 'schooling/consumer'
