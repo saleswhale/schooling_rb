@@ -52,7 +52,8 @@ module Schooling
     end
 
     def create_group
-      return if @redis.exists(topic)
+      groups = @redis.xinfo(:groups, topic)
+      return if groups.map { |g| g['name'] }.include? group
 
       @redis.xgroup(:create, topic, group, '$', mkstream: true)
     end
