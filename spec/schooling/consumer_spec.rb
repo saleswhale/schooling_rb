@@ -1,8 +1,7 @@
-require 'schooling/subscriber'
-require 'schooling/publisher'
+require 'schooling/consumer'
 require 'redis'
 
-describe Schooling::Subscriber do
+describe Schooling::Consumer do
   before(:each) do
     Redis.new.flushdb
   end

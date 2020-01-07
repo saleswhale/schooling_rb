@@ -40,15 +40,15 @@ module Schooling
     private
 
     def topic
-      @topic ||= config[:topic]
+      @topic ||= @config[:topic]
     end
 
     def group
-      @group ||= config[:group]
+      @group ||= @config[:group]
     end
 
     def consumer
-      @consumer ||= config[:consumer]
+      @consumer ||= @config[:consumer]
     end
 
     def create_group
