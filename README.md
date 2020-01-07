@@ -49,29 +49,19 @@ class Processor
   end
 end
 
-p = Schooling::Publisher.new(redis: Redis.new, topic: 'topic')
+p = Schooling::Publisher.new('t')
 
-s = described_class.new(
-  redis: Redis.new,
-  topic: 'topic',
-  group: 'g1',
-  consumer: 'c1',
-  processor: Processor.new
-)
+config_1 = { topic: 't', group: 'g', consumer: 'c1' }
+s = described_class.new(config_1, redis: Redis.new)
 
-s2 = described_class.new(
-  redis: Redis.new,
-  topic: 'topic',
-  group: 'g1',
-  consumer: 'c2',
-  processor: Processor.new
-)
+config_2 = { topic: 't', group: 'g', consumer: 'c2' }
+s2 = described_class.new(config_2, redis: Redis.new)
 
 p.publish('hello, world')
-s.create_group
 
-t1 = Thread.new { 100.times { s.process_batch } }
-t2 = Thread.new { 100.times { s2.process_batch } }
+processor = Processor.new
+t1 = Thread.new { 100.times { s.process(processor) } }
+t2 = Thread.new { 100.times { s2.process(processor) } }
 t3 = Thread.new { 100.times { |i| p.publish(a: i); sleep rand * 2 } }
 
 t1.join

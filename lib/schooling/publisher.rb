@@ -13,15 +13,15 @@ module Schooling
   #   p.publish a: 42, time: Time.now
   #
   class Publisher
+    attr_accessor :cap, :logger
     DEFAULT_CAP = 100_000 # Max events stored
 
-    def initialize(redis:, topic:, cap: DEFAULT_CAP,
-                   logger: Schooling::CliLogger.new)
+    def initialize(topic, redis: Redis.new)
+      @topic = topic
       @redis = redis
 
-      @topic = topic
-      @cap = cap
-      @logger = logger
+      @cap = DEFAULT_CAP
+      @logger = Schooling::CliLogger.new
     end
 
     def publish(body)

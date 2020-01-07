@@ -2,44 +2,32 @@ require 'schooling/subscriber'
 require 'schooling/publisher'
 require 'redis'
 
-class Processor
-  def process(e)
-    raise 'I fail' if rand > 0.5
-    sleep rand * 5
-  end
-end
-
 describe Schooling::Subscriber do
-  it 'should' do
+  before(:each) do
     Redis.new.flushdb
+  end
 
-    p = Schooling::Publisher.new(redis: Redis.new, topic: 'topic')
+  describe '#initialize' do
+    let(:config) { { topic: 't', group: 'g', consumer: 'c' } }
+    let(:redis) { Redis.new }
+    let(:client) { described_class.new(config, redis: redis) }
 
-    s = described_class.new(
-      redis: Redis.new,
-      topic: 'topic',
-      group: 'g1',
-      consumer: 'c1',
-      processor: Processor.new
-    )
+    it 'should create the group' do
+      expect(redis).to receive(:xgroup)
+      client
+    end
 
-    s2 = described_class.new(
-      redis: Redis.new,
-      topic: 'topic',
-      group: 'g1',
-      consumer: 'c2',
-      processor: Processor.new
-    )
+    context 'when the topic does not exist' do
+      it 'should create the topic' do
+        expect { client }.to change { redis.exists('t') }.to(true)
+      end
+    end
 
-    p.publish('hello, world')
-    s.create_group
-
-    t1 = Thread.new { 100.times { s.process_batch } }
-    t2 = Thread.new { 100.times { s2.process_batch } }
-    t3 = Thread.new { 100.times { |i| p.publish(a: i); sleep rand * 2 } }
-
-    t1.join
-    t2.join
-    t3.join
+    context 'when the group already exists' do
+      it 'should not fail' do
+        redis.xgroup(:create, 't', 'g', '$', mkstream: true)
+        expect { client }.not_to raise_error
+      end
+    end
   end
 end
