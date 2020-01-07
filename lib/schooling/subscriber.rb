@@ -37,7 +37,6 @@ module Schooling
     def create_group
       return if @redis.exists(@topic)
 
-      @logger.info event: :group_create, topic: @topic, name: @group
       @redis.xgroup(:create, @topic, @group, '$', mkstream: true)
     end
 
