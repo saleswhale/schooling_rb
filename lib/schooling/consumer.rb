@@ -53,8 +53,8 @@ module Schooling
 
     def create_group
       if @redis.exists(topic)
-        groups = @redis.xinfo(:groups, topic)
-        return if groups.map { |g| g['name'] }.include? group
+        groups = @redis.xinfo(:groups, topic).map { |g| g.dig('name') }
+        return if groups.include? group
       end
 
       @redis.xgroup(:create, topic, group, '$', mkstream: true)
@@ -62,7 +62,7 @@ module Schooling
 
     def process_event(processor, id, event)
       @logger.info event: :start_processing, id: id
-      processor.process(event)
+      processor.call(event)
       @redis.xack(topic, group, id)
       @logger.info event: :finish_processing, id: id
     rescue StandardError => e
@@ -72,6 +72,8 @@ module Schooling
     def process_failed_event(processor, id, retries)
       failed = @redis.xclaim(topic, group, consumer,
                              @backoff.timeout_ms(retries).to_int, id)[0]
+      return if failed.nil?
+
       unless failed&.dig(1, 'json')
         @logger.info event: :skipping_malformed, id: id
         @redis.xack(topic, group, id)

@@ -32,40 +32,30 @@ And then execute:
 
 You need to
 
-1. Supply a processor class
-2. Supply a Redis client instance
-3. Subscribe to the topic in a group as a consumer (unique name)
-4. Call `process`
+1. Subscribe to the topic in a group as a consumer, with an unique name
+2. Call `process` with a proc/lambda
 
 ```ruby
 require 'schooling/consumer'
 require 'schooling/producer'
 require 'redis'
 
-class Processor
-  def process(e)
-    raise 'I fail' if rand > 0.5
+processor = proc { |event| rand > 0.5 ? (raise 'I fail') : (sleep rand * 5) }
+# or: -> (event) { puts event }
+# or: Class.new { def call(event); puts event; end }.new
 
-    sleep rand * 5
-  end
-end
+config1 = { topic: 't', group: 'g', consumer: 'c1' }
+c = Schooling::Consumer.new(config1, redis: Redis.new)
+t1 = Thread.new { 10.times { c.process(processor) } }
+
+config2 = { topic: 't', group: 'g', consumer: 'c2' }
+c2 = Schooling::Consumer.new(config2, redis: Redis.new)
+t2 = Thread.new { 10.times { c2.process(processor) } }
 
 p = Schooling::Producer.new(:t)
-
-config1 = { topic: :t, group: :g, consumer: :c1 }
-c = Schooling::Consumer.new(config1, redis: Redis.new)
-
-config2 = { topic: :t, group: :g, consumer: :c2 }
-c2 = Schooling::Consumer.new(config2, redis: Redis.new)
-
-processor = Processor.new
-t1 = Thread.new { 10.times { c.process(processor) } }
-t2 = Thread.new { 10.times { c2.process(processor) } }
 t3 = Thread.new { 100.times { |i| p.publish(i); sleep rand * 2 } }
 
-t1.join
-t2.join
-t3.join
+[t1, t2, t3].each(&:join)
 ```
 
 ## Development

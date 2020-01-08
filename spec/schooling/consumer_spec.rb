@@ -40,29 +40,20 @@ describe Schooling::Consumer do
   end
 
   describe '#process' do
-    let(:processor) do
-      Class.new do
-        attr_accessor :m
-
-        def process(event)
-          (@m ||= []) << event
-        end
-      end.new
-    end
-
     before(:each) { client.block = 1 } # disable blocking
 
     it 'should not fail without events' do
-      expect { client.process(processor) }.not_to raise_error
+      expect { client.process -> {} }.not_to raise_error
     end
 
     context 'for a json payload' do
       it 'should receive the deserialized output' do
         redis.xadd('t', json: '[{"a": 42, "b": null}, 0.3]')
 
-        expect { client.process(processor) }
-          .to change { processor.m }
-          .from(nil)
+        m = []
+        expect { client.process ->(x) { m << x } }
+          .to change { m }
+          .from([])
           .to([[{ 'a' => 42, 'b' => nil }, 0.3]])
       end
     end
@@ -71,7 +62,7 @@ describe Schooling::Consumer do
       it 'should drop the message' do
         redis.xadd('t', mal: :formed)
 
-        expect { client.process(processor) }
+        expect { client.process -> {} }
           .not_to(change { redis.xinfo(:groups, 't').dig(0, 'pending') })
       end
     end
@@ -81,7 +72,7 @@ describe Schooling::Consumer do
         redis.xadd('t', mal: :formed)
         redis.xreadgroup('g', 'c', 't', '>')
 
-        expect { client.process(processor) }
+        expect { client.process -> {} }
           .to change { redis.xinfo(:groups, 't').dig(0, 'pending') }
           .from(1).to(0)
       end
