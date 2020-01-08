@@ -52,9 +52,7 @@ module Schooling
     end
 
     def create_group
-      exists = @redis.exists(topic)
-
-      if exists == 1
+      if @redis.exists(topic)
         groups = @redis.xinfo(:groups, topic)
         return if groups.map { |g| g['name'] }.include? group
       end
@@ -74,9 +72,13 @@ module Schooling
     def process_failed_event(processor, id, retries)
       failed = @redis.xclaim(topic, group, consumer,
                              @backoff.timeout_ms(retries).to_int, id)[0]
-      return if failed.nil?
+      unless failed&.dig(1, 'json')
+        @logger.info event: :skipping_malformed, id: id
+        @redis.xack(topic, group, id)
+        return
+      end
 
-      process_event(processor, id, JSON.parse(failed[1]['json']))
+      process_event(processor, id, JSON.parse(failed.dig(1, 'json')))
     end
 
     def process_failed_events(processor)
@@ -91,7 +93,15 @@ module Schooling
       events = @redis.xreadgroup(group, consumer, topic, '>', count: @batch, block: @block)
       return if events == {}
 
-      events.fetch(topic).each { |id, event| process_event(processor, id, JSON.parse(event['json'])) }
+      events.fetch(topic).each do |id, event|
+        unless event&.dig('json')
+          @logger.info event: :skipping_malformed, id: id
+          @redis.xack(topic, group, id)
+          next
+        end
+
+        process_event(processor, id, JSON.parse(event['json']))
+      end
     end
   end
 end
