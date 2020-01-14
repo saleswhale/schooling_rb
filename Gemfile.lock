@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    schooling (0.0.5)
+    schooling (0.0.6)
       redis (~> 4.1)
 
 GEM
