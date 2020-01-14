@@ -69,11 +69,13 @@ describe Schooling::Consumer do
 
     context 'for a malformed pending message' do
       it 'should drop the message' do
+        client.backoff = Class.new { def timeout_ms(_); 0; end }.new
+
         redis.xadd('t', mal: :formed)
         redis.xreadgroup('g', 'c', 't', '>')
 
-        expect { client.process -> {} }
-          .to change { redis.xinfo(:groups, 't').dig(0, 'pending') }
+        expect { client.process ->(event) { puts event } }
+          .to change { x = redis.xinfo(:groups, 't'); puts x; x.dig(0, 'pending') }
           .from(1).to(0)
       end
     end
