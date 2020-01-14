@@ -2,7 +2,6 @@
 
 A simple wrapper around Redis streams. Motivation:
 
-- [Notion Page](https://www.notion.so/saleswhale/Architecture-Discussion-1ffb11b51c02428d9b5dc1f5a88fe656)
 - [Redis Streams](https://redis.io/topics/streams-intro)
 
 Features:
