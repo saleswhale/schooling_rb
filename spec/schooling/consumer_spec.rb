@@ -75,7 +75,7 @@ describe Schooling::Consumer do
         redis.xreadgroup('g', 'c', 't', '>')
 
         expect { client.process ->(event) { puts event } }
-          .to change { x = redis.xinfo(:groups, 't'); puts x; x.dig(0, 'pending') }
+          .to change { x = redis.xinfo(:groups, 't').dig(0, 'pending') }
           .from(1).to(0)
       end
     end
