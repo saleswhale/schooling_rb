@@ -27,7 +27,7 @@ module Schooling
       @batch = BATCH_SIZE
       @block = DEFAULT_BLOCK
       @backoff = Schooling::ExponentialBackoff.new
-      @logger = Schooling::CliLogger.new(level: :debug)
+      @logger = Schooling::NullLogger.new
 
       create_group
     end
