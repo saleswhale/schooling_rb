@@ -1,5 +1,7 @@
 # Schooling
 
+![https://github.com/saleswhale/schooling_rb/actions?query=workflow%3ARSpec](https://github.com/saleswhale/schooling_rb/workflows/RSpec/badge.svg)
+
 A simple wrapper around Redis streams. Motivation:
 
 - [Redis Streams](https://redis.io/topics/streams-intro)
