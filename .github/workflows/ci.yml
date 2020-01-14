@@ -22,5 +22,4 @@ jobs:
       - name: Run RSpec
         run: |
           bundle install
-          bundle install rspec
           rspec ./spec
