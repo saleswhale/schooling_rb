@@ -80,4 +80,30 @@ describe Schooling::Consumer do
       end
     end
   end
+
+  describe '#input_lag' do
+    before(:each) { client.block = 1 } # disable blocking
+
+    context 'when the stream does not have any messages' do
+      it 'should be zero' do
+        expect(client.input_lag).to eq(0)
+      end
+    end
+
+    context 'when there are some unread messages on the stream' do
+      before { 3.times { redis.xadd('t', json: '42') } }
+
+      it 'should be the count' do
+        expect(client.input_lag).to eq(3)
+      end
+
+      context 'which have been processed' do
+        before { client.process ->() {} }
+
+        it 'should be back to 0' do
+          expect(client.input_lag).to eq(0)
+        end
+      end
+    end
+  end
 end

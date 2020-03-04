@@ -37,6 +37,20 @@ module Schooling
       process_unseen(processor)
     end
 
+    # Returns the number of unprocessed messages on the stream
+    #
+    # @return [integer] number of unread messages
+    def input_lag
+      group_info = @redis.xinfo(:groups, topic).select { |res| res['name'] == group }
+      last_id = group_info.first.dig('last-delivered-id')
+
+      if last_id && last_id != '0-0'
+        @redis.xrange(topic, last_id, '+').count - 1
+      else
+        @redis.xlen(topic)
+      end
+    end
+
     private
 
     def topic
